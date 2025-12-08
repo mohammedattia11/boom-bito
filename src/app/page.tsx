@@ -2,7 +2,7 @@
 import Typewriter from "@/components/type-writter";
 import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
-
+import {client} from "@/lib/client"
 const generateUsername = () => {
   return `anonymous-${nanoid(12)}`;
 };
