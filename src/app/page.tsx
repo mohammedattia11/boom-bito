@@ -1,16 +1,27 @@
 "use client";
 import Typewriter from "@/components/type-writter";
+import { client } from "@/lib/client";
+import { useMutation } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {client} from "@/lib/client"
 const generateUsername = () => {
   return `anonymous-${nanoid(12)}`;
 };
 const STORAGE_KEY = "chat_username";
 
 export default function Home() {
+  const router = useRouter();
   const [username, setUsername] = useState("anonymous");
   const [isLoaded, setIsLoaded] = useState(false);
+  const { mutate: createRoom } = useMutation({
+    mutationFn: async () => {
+      const res = await client.rooms.create.post();
+      if (res.status === 200) {
+        router.push(`/room/${res.data?.roomId}`);
+      }
+    },
+  });
   useEffect(() => {
     const main = () => {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -52,7 +63,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <button className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 transition-colors mt-2 cursor-pointer disabled:opacity-50">
+            <button
+              onClick={() => createRoom()}
+              className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 transition-colors mt-2 cursor-pointer disabled:opacity-50"
+            >
               CREATE SECURE ROOM
             </button>
           </div>
