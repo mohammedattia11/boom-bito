@@ -40,7 +40,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 min-h-16">
           <h1 className="font-bold text-2xl text-green-500 tracking-tight">
             {">"}
             <Typewriter text="private_chat" />
