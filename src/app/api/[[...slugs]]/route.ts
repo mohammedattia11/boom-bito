@@ -3,7 +3,7 @@ import { Elysia } from "elysia";
 import { nanoid } from "nanoid";
 const ROOM_TTL = 60 * 10;
 const rooms = new Elysia({ prefix: "/rooms" }).post("/create", async () => {
-  const roomId = nanoid(10);
+  const roomId = nanoid();
   await redis.hset(`meta:${roomId}`, {
     connected: [],
     createdAt: Date.now(),

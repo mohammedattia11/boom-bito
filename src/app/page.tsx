@@ -14,7 +14,7 @@ export default function Home() {
   const router = useRouter();
   const [username, setUsername] = useState("anonymous");
   const [isLoaded, setIsLoaded] = useState(false);
-  const { mutate: createRoom } = useMutation({
+  const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
       const res = await client.rooms.create.post();
       if (res.status === 200) {
@@ -65,9 +65,12 @@ export default function Home() {
             </div>
             <button
               onClick={() => createRoom()}
-              className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 transition-colors mt-2 cursor-pointer disabled:opacity-50"
+              disabled={isPending}
+              className={
+                "w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 transition-colors mt-2 cursor-pointer disabled:opacity-50"
+              }
             >
-              CREATE SECURE ROOM
+              {isPending ? "CREATING ROOM..." : "CREATE SECURE ROOM"}
             </button>
           </div>
         </div>
