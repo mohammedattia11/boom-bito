@@ -10,11 +10,11 @@ class AuthError extends Error {
 
 export const authMiddleware = new Elysia({ name: "auth" })
   .error({ AuthError })
-  .onError(({ code, set }) => {
+  .onError(({ code, set, error }) => {
     console.log(`Code: ${code}\nSet: ${set}`);
     if (code === "AuthError") {
       set.status = 401;
-      return { error: "unauthorized" };
+      return { error: error.message };
     }
   })
   .derive({ as: "scoped" }, async ({ query, cookie }) => {
@@ -23,7 +23,7 @@ export const authMiddleware = new Elysia({ name: "auth" })
     const token = cookie["x-auth-token"].value as string | undefined;
     if (!roomId || !token) {
       throw new AuthError(
-        "Missing roomID or user isn't allowrd to join the room"
+        "Missing roomID or user isn't allowed to join the room"
       );
     }
     const connected = await redis.hget<string[]>(`meta:${roomId}`, "connected");
