@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { authMiddleware } from "./auth";
+import { Message } from "@/lib/realtime";
 const ROOM_TTL = 60 * 10;
 const rooms = new Elysia({ prefix: "/rooms" }).post("/create", async () => {
   const roomId = nanoid();
@@ -24,6 +25,14 @@ const messages = new Elysia({ prefix: "/messages" })
     if (!roomExists) {
       throw new Error("Room does not exist!")
     }
+    const message:Message = {
+      id: nanoid(),
+      sender,
+      text,
+      timeStamp: Date.now(),
+      roomId
+    }
+
   },
   {
     query: z.object({
