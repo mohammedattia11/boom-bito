@@ -1,7 +1,9 @@
 "use client";
 import { useUsername } from "@/hooks/use-username";
 import { client } from "@/lib/client";
-import { useMutation } from "@tanstack/react-query";
+import { useRealtime } from "@/lib/realtime-client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { FaBomb } from "react-icons/fa6";
@@ -20,7 +22,8 @@ export default function RoomPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const params = useParams();
   const roomId = params.roomId as string;
-  const { mutate: sendMessage, isPending:isSending } = useMutation({
+
+  const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
       await client.messages.post(
         { sender: username, text },
@@ -28,6 +31,24 @@ export default function RoomPage() {
       );
     },
   });
+
+  const {data:messages, refetch} = useQuery({
+    queryKey: ["messages", roomId],
+    queryFn: async () => {
+      const res = await client.messages.get({ query: { roomId } });
+      return res.data;
+    },
+  });
+
+  useRealtime({
+    channels:[roomId],
+    events: ["chat.message","chat.destroy"],
+    onData: ({event}) => {
+      if (event === "chat.message") {
+        refetch();
+      }
+    }
+  })
 
   function copyLink() {
     const url = window.location.href;
@@ -77,7 +98,29 @@ export default function RoomPage() {
           DESTROY NOW
         </button>
       </header>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"></div>
+      {/* messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+        {messages?.messages.length === 0 && (
+          <div className="h-full flex justify-center items-center">
+            <p className="text-zinc-500 text-sm font-mono">No messages yet, start the conversation...</p>
+          </div>
+        )}
+        {messages?.messages.map( msg => (
+          <div key={msg.id} className="flex flex-col items-start">
+            <div className="w-[80%] group">
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className={`text-xs font-bold ${msg.sender === username ? "text-green-500" : "text-blue-500"}`}>
+                  {msg.sender === username ? "YOU" : msg.sender}
+                </span>
+                <span className="text-[10px] text-zinc-500">
+                  {format(msg.timeStamp,"HH:mm")}
+                </span>
+              </div>
+              <p className="text-sm text-zinc-300 leading-relaxed break-all">{msg.text}</p>
+            </div>
+          </div>
+        ) )}
+      </div>
       <div className="p-4 border-t border-zinc-800 bg-zinc-900/30">
         <div className="flex gap-4">
           <div className="flex-1 relative group">
@@ -89,7 +132,7 @@ export default function RoomPage() {
               onKeyDown={e => {
                 if (e.key === "Enter" && input.trim()) {
                   sendMessage({ text: input });
-                  setInput("")
+                  setInput("");
                   inputRef.current?.focus();
                 }
               }}
@@ -104,7 +147,7 @@ export default function RoomPage() {
             onClick={() => {
               inputRef.current?.focus();
               sendMessage({ text: input });
-              setInput("")
+              setInput("");
             }}
             disabled={!input.trim() || isSending}
             className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"

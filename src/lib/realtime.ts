@@ -14,10 +14,10 @@ const message = z.object({
 const schema = {
   chat: {
     message,
-  },
-  destroy: z.object({
-    isDestroyed: z.literal(true),
-  }),
+    destroy: z.object({
+      isDestroyed: z.literal(true),
+  })
+  }
 };
 
 export const realtime = new Realtime({ schema, redis });

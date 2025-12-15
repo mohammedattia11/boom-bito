@@ -14,41 +14,62 @@ const rooms = new Elysia({ prefix: "/rooms" }).post("/create", async () => {
   await redis.expire(`meta:${roomId}`, ROOM_TTL);
   return { roomId };
 });
-const messages = new Elysia({ prefix: "/messages" }).use(authMiddleware).post(
-  "/",
-  async ({ body, auth }) => {
-    const { sender, text } = body;
-    const { roomId } = auth;
-    const roomExists = await redis.exists(`meta:${roomId}`);
-    if (!roomExists) {
-      throw new Error("Room does not exist!");
+const messages = new Elysia({ prefix: "/messages" })
+  .use(authMiddleware)
+  .post(
+    "/",
+    async ({ body, auth }) => {
+      const { sender, text } = body;
+      const { roomId } = auth;
+      const roomExists = await redis.exists(`meta:${roomId}`);
+      if (!roomExists) {
+        throw new Error("Room does not exist!");
+      }
+      const message: Message = {
+        id: nanoid(),
+        sender,
+        text,
+        timeStamp: Date.now(),
+        roomId,
+      };
+
+      await redis.rpush(`message:${roomId}`, { ...message, token: auth.token });
+      await realtime.channel(roomId).emit("chat.message", message);
+
+      const remaining = await redis.ttl(`meta:${roomId}`);
+      await redis.expire(`message:${roomId}`, remaining);
+      await redis.expire(`history:${roomId}`, remaining);
+      await redis.expire(roomId, remaining);
+    },
+    {
+      query: z.object({
+        roomId: z.string(),
+      }),
+      body: z.object({
+        sender: z.string().max(100),
+        text: z.string().max(1000),
+      }),
     }
-    const message: Message = {
-      id: nanoid(),
-      sender,
-      text,
-      timeStamp: Date.now(),
-      roomId,
+  )
+  .get("/", async ({ auth }) => {
+    const messages = await redis.lrange<Message>(
+      `message:${auth.roomId}`,
+      0,
+      -1
+    );
+    return {
+      messages: messages.map(message => {
+        return {
+          ...message,
+          token: message.token === auth.token ? auth.token : undefined,
+        };
+      }),
     };
-
-    await redis.rpush(`message:${roomId}`, { ...message, token: auth.token });
-    await realtime.channel(roomId).emit("chat.message", message);
-
-    const remaining = await redis.ttl(`meta:${roomId}`);
-    await redis.expire(`message:${roomId}`, remaining);
-    await redis.expire(`history:${roomId}`, remaining);
-    await redis.expire(roomId, remaining);
-  },
-  {
+  },{
     query: z.object({
-      roomId: z.string(),
-    }),
-    body: z.object({
-      sender: z.string().max(100),
-      text: z.string().max(1000),
-    }),
-  }
-);
+      roomId: z.string()
+    })
+  });
 const app = new Elysia({ prefix: "/api" }).use(rooms).use(messages);
 
 export type app = typeof app;
