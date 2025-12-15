@@ -1,19 +1,16 @@
 "use client";
 import Typewriter from "@/components/type-writter";
+import { useUsername } from "@/hooks/use-username";
 import { client } from "@/lib/client";
 import { useMutation } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-const generateUsername = () => {
-  return `anonymous-${nanoid(12)}`;
-};
-const STORAGE_KEY = "chat_username";
 
 export default function Home() {
   const router = useRouter();
-  const [username, setUsername] = useState("anonymous");
   const [isLoaded, setIsLoaded] = useState(false);
+  const username = useUsername();
+
   const { mutate: createRoom, isPending } = useMutation({
     mutationFn: async () => {
       const res = await client.rooms.create.post();
@@ -22,21 +19,12 @@ export default function Home() {
       }
     },
   });
+
   useEffect(() => {
-    const main = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setUsername(stored);
-        return;
-      }
-      const generated = generateUsername();
-      localStorage.setItem(STORAGE_KEY, generated);
-      setUsername(generated);
-    };
-    main();
     const timer = setTimeout(() => setIsLoaded(true), 2000);
     return () => clearTimeout(timer);
   }, []);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">

@@ -1,4 +1,7 @@
 "use client";
+import { useUsername } from "@/hooks/use-username";
+import { client } from "@/lib/client";
+import { useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { FaBomb } from "react-icons/fa6";
@@ -10,11 +13,21 @@ function formatTimeRemaining(seconds: number) {
 }
 
 export default function RoomPage() {
+  const username = useUsername();
   const [copyStatus, setCopyStatus] = useState("COPY");
   const [timeRemaining, setTimeRemaining] = useState<number | null>(120);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { roomId } = useParams();
+  const params = useParams();
+  const roomId = params.roomId as string;
+  const { mutate: sendMessage } = useMutation({
+    mutationFn: async ({ text }: { text: string }) => {
+      await client.messages.post(
+        { sender: username, text },
+        { query: { roomId } }
+      );
+    },
+  });
 
   function copyLink() {
     const url = window.location.href;
@@ -73,20 +86,26 @@ export default function RoomPage() {
             </span>
             <input
               autoFocus
-              onKeyDown={(e)=>{
+              onKeyDown={e => {
                 if (e.key === "Enter" && input.trim()) {
-                  // send message 
-                  inputRef.current?.focus()
+                  sendMessage({ text: input });
+                  inputRef.current?.focus();
                 }
               }}
               placeholder="Type message..."
               value={input}
-              onChange={(e)=>setInput(e.target.value)}
+              onChange={e => setInput(e.target.value)}
               type="text"
               className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100 placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm"
             />
           </div>
-          <button className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          <button
+            onClick={() => {
+              inputRef.current?.focus();
+              sendMessage({ text: input });
+            }}
+            className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
             SEND
           </button>
         </div>
