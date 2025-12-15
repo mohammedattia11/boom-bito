@@ -4,7 +4,7 @@ import { client } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FaBomb } from "react-icons/fa6";
 
@@ -21,6 +21,7 @@ export default function RoomPage() {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const params = useParams();
+  const router = useRouter()
   const roomId = params.roomId as string;
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
@@ -46,6 +47,9 @@ export default function RoomPage() {
     onData: ({event}) => {
       if (event === "chat.message") {
         refetch();
+      }
+      if (event === "chat.destroy") {
+        router.push("/?destroyed=true")
       }
     }
   })
