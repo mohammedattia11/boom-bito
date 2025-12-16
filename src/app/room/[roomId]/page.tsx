@@ -35,6 +35,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     if (room?.ttl !== undefined) {
+      // eslint-disable-next-line
       setTimeRemaining(room.ttl);
     }
   }, [room]);
