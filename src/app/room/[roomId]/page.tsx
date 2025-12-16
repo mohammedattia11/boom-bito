@@ -1,149 +1,41 @@
 "use client";
+import RoomHeader from "@/components/room-header";
+import { useRoomMessages } from "@/hooks/use-room-messages";
 import { useUsername } from "@/hooks/use-username";
-import { client } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { FaBomb } from "react-icons/fa6";
-
-function formatTimeRemaining(seconds: number) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+import { useRef, useState } from "react";
 
 export default function RoomPage() {
-  const username = useUsername();
-  const [copyStatus, setCopyStatus] = useState("COPY");
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const params = useParams();
   const router = useRouter();
   const roomId = params.roomId as string;
-
-  // getting ttl information
-  const { data: room } = useQuery({
-    queryKey: ["ttl", roomId],
-    queryFn: async () => {
-      const res = await client.rooms.ttl.get({ query: { roomId } });
-      return res.data;
-    },
-  });
-
-  useEffect(() => {
-    if (room?.ttl !== undefined) {
-      // eslint-disable-next-line
-      setTimeRemaining(room.ttl);
-    }
-  }, [room]);
-
-  useEffect(() => {
-    if (timeRemaining === null || timeRemaining < 0) return;
-    if (timeRemaining === 0) {
-      router.push("/?destroyed=true");
-    }
-    const interval = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeRemaining, router]);
-
-  // sending message
-  const { mutate: sendMessage, isPending: isSending } = useMutation({
-    mutationFn: async ({ text }: { text: string }) => {
-      await client.messages.post(
-        { sender: username, text },
-        { query: { roomId } }
-      );
-    },
-  });
-  // gettings messages
-  const { data: messages, refetch } = useQuery({
-    queryKey: ["messages", roomId],
-    queryFn: async () => {
-      const res = await client.messages.get({ query: { roomId } });
-      return res.data;
-    },
-  });
+  const username = useUsername();
+  const { messages, refetchMessages, sendMessage, isSending } = useRoomMessages(
+    roomId,
+    username
+  );
 
   useRealtime({
     channels: [roomId],
     events: ["chat.message", "chat.destroy"],
     onData: ({ event }) => {
       if (event === "chat.message") {
-        refetch();
+        refetchMessages();
       }
       if (event === "chat.destroy") {
         router.push("/?destroyed=true");
       }
     },
   });
-  const { mutate: destroyRoom } = useMutation({
-    mutationFn: async () => {
-      await client.rooms.delete(null, { query: { roomId } });
-    },
-  });
-  function copyLink() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    setCopyStatus("COPIED!!");
-    setTimeout(() => setCopyStatus("COPY"), 2000);
-  }
-
+  
   return (
     <main className="flex flex-col h-screen max-h-screen overflow-hidden">
-      <header className="border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900/30">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <span className="text-zinc-500 text-sm uppercase">Room ID</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-green-500">{roomId}</span>
-              <button
-                onClick={copyLink}
-                className="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
-              >
-                {copyStatus}
-              </button>
-            </div>
-          </div>
-          <div className="h-8 w-px bg-zinc-800" />
-          <div className="flex flex-col">
-            <span className="text-xs text-zinc-500 uppercase">
-              Self-Destruct
-            </span>
-            <span
-              className={`text-sm font-bold flex items-center gap-2 ${
-                timeRemaining !== null && timeRemaining < 60
-                  ? "text-red-500"
-                  : "text-amber-500"
-              }`}
-            >
-              {timeRemaining !== null
-                ? formatTimeRemaining(timeRemaining)
-                : "--:--"}
-            </span>
-          </div>
-        </div>
-        <button
-          onClick={() => destroyRoom()}
-          className="bg-zinc-800 hover:bg-red-600 text-xs px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-all group flex gap-2 items-center disabled:opacity-50"
-        >
-          <span className="group-hover:animate-pulse pb-1">
-            <FaBomb size={18} />
-          </span>
-          DESTROY NOW
-        </button>
-      </header>
-      {/* messages */}
+      <RoomHeader roomId={roomId} router={router}/>
+      {/* room body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages?.messages.length === 0 && (
           <div className="h-full flex justify-center items-center">
