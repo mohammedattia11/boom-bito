@@ -1,28 +1,18 @@
 "use client";
 import { ErrorMessage } from "@/components/error-message";
 import Typewriter from "@/components/type-writter";
+import { useCreateRoom } from "@/hooks/use-create-room";
 import { useUsername } from "@/hooks/use-username";
-import { client } from "@/lib/client";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
+  const { createRoom, isPending } = useCreateRoom();
   const username = useUsername();
   const searchParams = useSearchParams();
   const wasDestroyed = searchParams.get("destroyed") === "true";
-  const error = searchParams.get("error")
-
-  const { mutate: createRoom, isPending } = useMutation({
-    mutationFn: async () => {
-      const res = await client.rooms.create.post();
-      if (res.status === 200) {
-        router.push(`/room/${res.data?.roomId}`);
-      }
-    },
-  });
+  const error = searchParams.get("error");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 2000);
@@ -32,9 +22,11 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        {wasDestroyed && <ErrorMessage errorMessage="destroyed"/>}
-        {error === "room-not-found" && <ErrorMessage errorMessage="room-not-found"/>}
-        {error === "full-room" && <ErrorMessage errorMessage="full-room"/>}
+        {wasDestroyed && <ErrorMessage errorMessage="destroyed" />}
+        {error === "room-not-found" && (
+          <ErrorMessage errorMessage="room-not-found" />
+        )}
+        {error === "full-room" && <ErrorMessage errorMessage="full-room" />}
         <div className="text-center space-y-2 min-h-16">
           <h1 className="font-bold text-2xl text-green-500 tracking-tight">
             {">"}
