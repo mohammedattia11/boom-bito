@@ -64,7 +64,7 @@ const messages = new Elysia({ prefix: "/messages" })
         roomId,
       };
 
-      await redis.rpush(`message:${roomId}`, { ...message, token: auth.token });
+      await redis.rpush(`message:${roomId}`, { ...message, token: auth.token,avatar:auth.avatar});
       await realtime.channel(roomId).emit("chat.message", message);
 
       const remaining = await redis.ttl(`meta:${roomId}`);

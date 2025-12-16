@@ -4,6 +4,7 @@ import { useRoomMessages } from "@/hooks/use-room-messages";
 import { useUsername } from "@/hooks/use-username";
 import { useRealtime } from "@/lib/realtime-client";
 import { format } from "date-fns";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -31,10 +32,10 @@ export default function RoomPage() {
       }
     },
   });
-  
+
   return (
     <main className="flex flex-col h-screen max-h-screen overflow-hidden">
-      <RoomHeader roomId={roomId} router={router}/>
+      <RoomHeader roomId={roomId} router={router} />
       {/* room body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages?.messages.length === 0 && (
@@ -45,23 +46,42 @@ export default function RoomPage() {
           </div>
         )}
         {messages?.messages.map(msg => (
-          <div key={msg.id} className="flex flex-col items-start">
-            <div className="w-[80%] group">
-              <div className="flex items-baseline gap-3 mb-1">
-                <span
-                  className={`text-xs font-bold ${
-                    msg.sender === username ? "text-green-500" : "text-blue-500"
-                  }`}
-                >
-                  {msg.sender === username ? "YOU" : msg.sender}
-                </span>
-                <span className="text-[10px] text-zinc-500">
-                  {format(msg.timeStamp, "HH:mm")}
-                </span>
+          <div
+            dir={msg.sender === username ? "rtl" : "ltr"}
+            key={msg.id}
+            className="flex flex-col items-start"
+          >
+            <div className="w-[80%] group flex items-center gap-3">
+              {msg.avatar && (
+                <div className="relative w-8 h-8">
+                  <Image
+                    fill
+                    className="h-full w-full object-cover rounded-full"
+                    src={msg.avatar}
+                    alt=""
+                  />
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-baseline gap-3 mb-1">
+                  <span
+                    className={`text-xs font-bold ${
+                      msg.sender === username
+                        ? "text-green-500"
+                        : "text-blue-500"
+                    }`}
+                  >
+                    {msg.sender === username ? "YOU" : msg.sender}
+                  </span>
+                  <span className="text-[10px] text-zinc-500">
+                    {format(msg.timeStamp, "HH:mm")}
+                  </span>
+                </div>
+                <p className="text-sm text-zinc-300 leading-relaxed break-all">
+                  {msg.text}
+                </p>
               </div>
-              <p className="text-sm text-zinc-300 leading-relaxed break-all">
-                {msg.text}
-              </p>
             </div>
           </div>
         ))}

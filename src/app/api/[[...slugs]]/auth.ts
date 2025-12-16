@@ -26,9 +26,10 @@ export const authMiddleware = new Elysia({ name: "auth" })
       );
     }
 
-    const connected = await redis.hget<string[]>(`meta:${roomId}`, "connected");
-    if (!connected?.includes(token)) {
+    const connected = await redis.hget<ConnectedUsersType[]>(`meta:${roomId}`, "connected");
+    const avatar = connected?.find(user => user.token === token)?.avatar
+    if (!connected?.some(user => user.token === token)) {
       throw new AuthError("Current user is not a part of this room");
     }
-    return { auth: { roomId, token, connected } };
+    return { auth: { roomId, token,avatar, connected } };
   });

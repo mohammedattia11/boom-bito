@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "./lib/redis";
+import { getAvatar } from "./utils/get-avatar";
 
 export const proxy = async (req: NextRequest) => {
   const pathName = req.nextUrl.pathname;
@@ -9,7 +10,7 @@ export const proxy = async (req: NextRequest) => {
   if (!matchedRoom) return NextResponse.redirect(new URL("/", req.url));
 
   const roomId = matchedRoom[1];
-  const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(
+  const meta = await redis.hgetall<{ connected: ConnectedUsersType[]; createdAt: number }>(
     `meta:${roomId}`
   );
 
@@ -17,7 +18,7 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL("/?error=room-not-found", req.url));
   }
   const existedToken = req.cookies.get("x-auth-token")?.value;
-  if (existedToken && meta.connected.includes(existedToken)) {
+  if (existedToken && meta.connected.some(user => user.token === existedToken)) {
     return NextResponse.next();
   }
   if (meta.connected.length >= 2) {
@@ -34,7 +35,7 @@ export const proxy = async (req: NextRequest) => {
   });
 
   await redis.hset(`meta:${roomId}`, {
-    connected: [...meta.connected, token],
+    connected: [...meta.connected, {token,avatar:getAvatar(token)}],
   });
   return response;
 };

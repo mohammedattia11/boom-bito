@@ -9,6 +9,7 @@ const message = z.object({
       timeStamp: z.number(),
       roomId: z.string(),
       token: z.string().optional(),
+      avatar:z.string().optional()
     })
 
 const schema = {
