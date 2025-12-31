@@ -21,7 +21,7 @@ export default function RoomHeader({roomId,router}:{roomId:string,router:AppRout
               <div className="flex flex-col">
                 <span className="text-zinc-500 text-sm uppercase">Room ID</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-green-500">{roomId}</span>
+                  <span className="font-bold text-xs text-green-500">{roomId}</span>
                   <button
                     onClick={copyLink}
                     className="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -33,7 +33,7 @@ export default function RoomHeader({roomId,router}:{roomId:string,router:AppRout
               <div className="h-8 w-px bg-zinc-800" />
               <div className="flex flex-col">
                 <span className="text-xs text-zinc-500 uppercase">
-                  Self-Destruct
+                  {window.innerWidth > 400 && "Self-Destruct"}
                 </span>
                 <span
                   className={`text-sm font-bold flex items-center gap-2 ${
@@ -53,9 +53,9 @@ export default function RoomHeader({roomId,router}:{roomId:string,router:AppRout
               className="bg-zinc-800 hover:bg-red-600 text-xs px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-all group flex gap-2 items-center disabled:opacity-50"
             >
               <span className="group-hover:animate-pulse pb-1">
-                <FaBomb size={18} />
+                <FaBomb size={window.innerWidth > 400 ?18 : 15} />
               </span>
-              DESTROY NOW
+              {window.innerWidth > 400 && "DESTROY NOW"}
             </button>
           </header>
   )
