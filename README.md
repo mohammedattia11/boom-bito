@@ -1,5 +1,7 @@
 # Boom Bito
 
+![header_image](/public/readme_header.png)
+
 **Boom Bito** is a secure, ephemeral, realtime chat application designed for private conversations. It enables users to create temporary chat rooms that self-destruct after use or upon request. With anonymous identities and no persistent storage of messages beyond the room's lifespan, it ensures privacy and security.
 
 ## Features
