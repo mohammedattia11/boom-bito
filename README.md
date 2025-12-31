@@ -126,17 +126,3 @@ bun run start
 ```
 
 This project handles both frontend and backend in a single Next.js build, making it easy to deploy on platforms like Vercel.
-
-## Scripts
-
-- `bun dev`: Starts the development server.
-- `bun build`: Builds the application for production.
-- `bun start`: Starts the production server.
-- `bun lint`: Runs ESLint.
-
-## Future Improvements
-
-- **Global Middleware Integration**: Ensure `src/proxy.ts` logic is fully integrated as `middleware.ts` to strictly enforce room access at the edge.
-- **User Authentication**: Add optional persistent user accounts.
-- **Media Support**: Allow sending images or files in chat.
-- **Encryption**: Implement end-to-end encryption for messages before they hit the server.
