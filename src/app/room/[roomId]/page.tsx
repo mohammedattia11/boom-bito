@@ -34,7 +34,7 @@ export default function RoomPage() {
   });
 
   return (
-    <main className="flex flex-col h-screen max-h-screen overflow-hidden">
+    <main className="flex flex-col h-dvh max-h-dvh overflow-hidden">
       <RoomHeader roomId={roomId} router={router} />
       {/* room body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
